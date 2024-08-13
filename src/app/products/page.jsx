@@ -32,32 +32,32 @@ export default function Products() {
 
   const { getToken, userId } = useAuth()
 
-  useEffect(() => {
-    const signIntoFirebaseWithClerk = async () => {
-      const token = await getToken({ template: 'integration_firebase' })
-      setToken(token)
-      const userCredentials = await signInWithCustomToken(auth, token || '')
-      console.log('User:', userCredentials.user)
-    }
-    signIntoFirebaseWithClerk()
-  }, [token])
+  const signIntoFirebaseWithClerk = async () => {
+    const token = await getToken({ template: 'integration_firebase' })
+    await signInWithCustomToken(auth, token || '')
+    setToken(token);
+  }
+
+  const fetchData = async () => {
+    const productsRef = collection(db, 'Products')
+    const querySnapshot = await getDocs(productsRef)
+    const productsArray = querySnapshot.docs.map((doc) => ({
+      id: doc.id,
+      ...doc.data(),
+    }))
+    setData(productsArray)
+  }
+
+  const SignFirebase = async () => {
+    await signIntoFirebaseWithClerk()
+    fetchData()
+  }
 
   useEffect(() => {
     if (!userId) {
       return <p>You need to sign in with Clerk to access this page.</p>
     }
-
-    const fetchData = async () => {
-      const productsRef = collection(db, 'Products')
-      const querySnapshot = await getDocs(productsRef)
-      const productsArray = querySnapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      }))
-      setData(productsArray)
-    }
-
-    fetchData()
+    SignFirebase()
   }, [token])
 
   const handleAddProduct = async () => {
